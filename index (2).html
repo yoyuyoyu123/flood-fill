@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>溢彩画</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#0e0e12;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:1rem;
+}
+.gw{
+  font-family:'Noto Sans SC',sans-serif;
+  padding:1.5rem 1.2rem 1.2rem;
+  max-width:620px;
+  width:100%;
+  margin:0 auto;
+  user-select:none;
+  background:#18181f;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.06);
+}
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem}
+.ttl{font-family:'Noto Serif SC',serif;font-size:18px;font-weight:600;color:#e8e6df;letter-spacing:.12em}
+.sub{font-size:11px;color:#706f6a;letter-spacing:.06em;margin-top:4px}
+.lv{font-size:11px;color:#9d9b93;letter-spacing:.06em;margin-top:2px}
+.stats{display:flex;gap:20px}
+.si{display:flex;flex-direction:column;align-items:flex-end}
+.sl{font-size:10px;color:#706f6a;letter-spacing:.1em}
+.sv{font-size:22px;font-weight:500;color:#e8e6df;line-height:1.1;font-variant-numeric:tabular-nums}
+.sv.warn{color:#EF9F27}.sv.danger{color:#D85A30}
+.cc{position:relative;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.06);background:#111116}
+#gc{display:block;width:100%;cursor:crosshair}
+.pbw{height:2px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:10px;overflow:hidden}
+.pb{height:100%;border-radius:2px;transition:width .35s ease;background:#5DCAA5}
+.pr{display:flex;gap:8px;margin-top:1rem;align-items:center;justify-content:center;flex-wrap:wrap}
+.pl{font-size:11px;color:#706f6a;letter-spacing:.08em}
+.sw{width:32px;height:32px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:transform .15s,border-color .15s,box-shadow .15s;flex-shrink:0}
+.sw.active{transform:scale(1.28);border-color:#e8e6df;box-shadow:0 0 12px rgba(255,255,255,.12)}
+.sw:hover:not(.active){transform:scale(1.1)}
+.ar{display:flex;gap:8px;margin-top:1rem;justify-content:center;flex-wrap:wrap}
+.btn{
+  font-family:'Noto Sans SC',sans-serif;font-size:12px;padding:7px 18px;border-radius:7px;
+  border:1px solid rgba(255,255,255,.1);background:transparent;color:#c4c2ba;
+  cursor:pointer;letter-spacing:.05em;transition:background .12s,border-color .15s;
+}
+.btn:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18)}
+.btn:active{transform:scale(.97)}
+.btn.p{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.15)}
+.ht{font-size:11px;color:#706f6a;text-align:center;margin-top:8px;letter-spacing:.04em;min-height:16px}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.62);border-radius:10px;opacity:0;pointer-events:none;transition:opacity .35s}
+.ov.show{opacity:1;pointer-events:all}
+.ot{font-family:'Noto Serif SC',serif;font-size:22px;font-weight:600;color:#fff;letter-spacing:.14em;margin-bottom:6px}
+.os{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:20px;letter-spacing:.05em}
+.ob{
+  font-family:'Noto Sans SC',sans-serif;font-size:13px;padding:9px 28px;border-radius:8px;
+  border:1.5px solid rgba(255,255,255,.5);background:rgba(255,255,255,.08);color:#fff;
+  cursor:pointer;letter-spacing:.08em;transition:background .15s;
+}
+.ob:hover{background:rgba(255,255,255,.18)}
+.footer{text-align:center;margin-top:1rem;font-size:10px;color:#4a4945;letter-spacing:.05em}
+</style>
+</head>
+<body>
+
+<div class="gw">
+<div class="hdr">
+  <div>
+    <div class="ttl">溢彩画</div>
+    <div class="lv" id="lvl">第 1 关</div>
+    <div class="sub">将所有色块染成同一颜色</div>
+  </div>
+  <div class="stats">
+    <div class="si"><span class="sl">进度</span><span class="sv" id="pct">0%</span></div>
+    <div class="si"><span class="sl">剩余</span><span class="sv" id="steps">—</span></div>
+  </div>
+</div>
+
+<div class="cc">
+  <canvas id="gc" height="340"></canvas>
+  <div class="ov" id="ov">
+    <div class="ot" id="ot">画作完成</div>
+    <div class="os" id="os"></div>
+    <button class="ob" id="ovBtn">下一关</button>
+  </div>
+</div>
+
+<div class="pbw"><div class="pb" id="pb" style="width:0%"></div></div>
+
+<div class="pr">
+  <span class="pl">选色</span>
+  <div id="swWrap" style="display:flex;gap:9px;align-items:center"></div>
+</div>
+
+<div class="ar">
+  <button class="btn" onclick="restartLevel()">重来</button>
+  <button class="btn" onclick="undoMove()">撤回</button>
+  <button class="btn" onclick="skipLevel()">跳关</button>
+  <button class="btn p" onclick="newGame()">重置</button>
+</div>
+
+<div class="ht" id="ht">点击色块，以当前颜色填充相连区域</div>
+
+<div class="footer">溢彩画 — flood fill puzzle</div>
+</div>
+
+<script>
+const COLORS=['#5DCAA5','#7F77DD','#D85A30','#378ADD','#EF9F27','#D4537E'];
+const ROWS=14,COLS=18;
+
+const LEVELS=[
+  {colors:3, scrambles:5,  extra:1},
+  {colors:3, scrambles:7,  extra:1},
+  {colors:4, scrambles:8,  extra:1},
+  {colors:4, scrambles:10, extra:1},
+  {colors:5, scrambles:11, extra:0},
+  {colors:5, scrambles:13, extra:0},
+  {colors:6, scrambles:14, extra:0},
+  {colors:6, scrambles:16, extra:0},
+];
+
+let grid=[],curColor=0,stepsLeft=0,maxSteps=0,hist=[],over=false,anim=false,lvIdx=0;
+let initialGrid=[];
+
+const cvs=document.getElementById('gc'),cx=cvs.getContext('2d');
+
+function getLv(i){return LEVELS[Math.min(i,LEVELS.length-1)];}
+function cw(){return cvs.width/COLS;}
+function ch(){return cvs.height/ROWS;}
+function resize(){const w=cvs.parentElement.clientWidth;cvs.width=w;cvs.height=Math.round(w*340/560);}
+function clone(g){return g.map(r=>[...r]);}
+
+function regionAt(g,sr,sc){
+  const col=g[sr][sc],vis=Array.from({length:ROWS},()=>new Array(COLS).fill(false));
+  const q=[[sr,sc]],cells=[];vis[sr][sc]=true;
+  while(q.length){
+    const[r,c]=q.shift();cells.push([r,c]);
+    for(const[dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&!vis[nr][nc]&&g[nr][nc]===col){vis[nr][nc]=true;q.push([nr,nc]);}
+    }
+  }
+  return cells;
+}
+
+function bfsSubset(g,sr,sc,color,maxSize){
+  const vis=Array.from({length:ROWS},()=>new Array(COLS).fill(false));
+  const q=[[sr,sc]],res=[];vis[sr][sc]=true;
+  while(q.length&&res.length<maxSize){
+    const idx=Math.floor(Math.random()*q.length);
+    const[r,c]=q.splice(idx,1)[0];
+    if(g[r][c]===color)res.push([r,c]);
+    for(const[dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+      const nr=r+dr,nc=c+dc;
+      if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&!vis[nr][nc]&&g[nr][nc]===color){vis[nr][nc]=true;q.push([nr,nc]);}
+    }
+  }
+  return res;
+}
+
+function countRegions(g){
+  const vis=Array.from({length:ROWS},()=>new Array(COLS).fill(false));
+  let n=0;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    if(!vis[r][c]){
+      n++;const col=g[r][c],q=[[r,c]];vis[r][c]=true;
+      while(q.length){const[nr,nc]=q.shift();for(const[dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){const rr=nr+dr,cc=nc+dc;if(rr>=0&&rr<ROWS&&cc>=0&&cc<COLS&&!vis[rr][cc]&&g[rr][cc]===col){vis[rr][cc]=true;q.push([rr,cc]);}}}
+    }
+  }
+  return n;
+}
+
+function generate(lv){
+  resize();
+  let bestG=null,bestR=0;
+  for(let att=0;att<20;att++){
+    const base=Math.floor(Math.random()*lv.colors);
+    const g=Array.from({length:ROWS},()=>new Array(COLS).fill(base));
+    for(let s=0;s<lv.scrambles;s++){
+      const pr=Math.floor(Math.random()*ROWS),pc=Math.floor(Math.random()*COLS);
+      const cc=g[pr][pc];
+      const region=regionAt(g,pr,pc);
+      if(region.length<3)continue;
+      const sz=Math.max(2,Math.floor(region.length*(0.12+Math.random()*0.38)));
+      const sub=bfsSubset(g,pr,pc,cc,sz);
+      if(sub.length<2)continue;
+      let nc;do{nc=Math.floor(Math.random()*lv.colors);}while(nc===cc);
+      for(const[r,c] of sub)g[r][c]=nc;
+    }
+    const rg=countRegions(g);
+    const allSame=g.every(row=>row.every(v=>v===g[0][0]));
+    if(!allSame&&rg>bestR){bestR=rg;bestG=clone(g);}
+  }
+  if(!bestG){
+    const g=Array.from({length:ROWS},()=>[]);
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)g[r].push(Math.floor(Math.random()*lv.colors));
+    bestG=g;
+  }
+  return bestG;
+}
+
+function initLevel(idx){
+  lvIdx=idx;
+  const lv=getLv(idx);
+  grid=generate(lv);
+  initialGrid=clone(grid);
+  maxSteps=lv.scrambles+lv.extra;
+  stepsLeft=maxSteps;
+  curColor=0;over=false;hist=[];anim=false;
+  document.getElementById('ov').classList.remove('show');
+  document.getElementById('lvl').textContent='第 '+(idx+1)+' 关';
+  document.getElementById('ht').textContent='点击色块，以当前颜色填充相连区域';
+  buildSw(lv.colors);
+  updateUI();draw();
+}
+
+function newGame(){initLevel(0);}
+function restartLevel(){grid=clone(initialGrid);stepsLeft=maxSteps;over=false;hist=[];anim=false;document.getElementById('ov').classList.remove('show');updateUI();draw();}
+function skipLevel(){initLevel(lvIdx+1);}
+
+function draw(){
+  const cW=cw(),cH=ch();
+  cx.clearRect(0,0,cvs.width,cvs.height);
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    cx.fillStyle=COLORS[grid[r][c]];
+    cx.fillRect(c*cW+.4,r*cH+.4,cW-.8,cH-.8);
+  }
+  cx.strokeStyle='rgba(255,255,255,.06)';cx.lineWidth=.5;
+  for(let r=0;r<=ROWS;r++){cx.beginPath();cx.moveTo(0,r*cH);cx.lineTo(cvs.width,r*cH);cx.stroke();}
+  for(let c=0;c<=COLS;c++){cx.beginPath();cx.moveTo(c*cW,0);cx.lineTo(c*cW,cvs.height);cx.stroke();}
+}
+
+cvs.addEventListener('click',function(e){
+  if(over||anim)return;
+  const rect=cvs.getBoundingClientRect();
+  const sx=cvs.width/rect.width,sy=cvs.height/rect.height;
+  const x=(e.clientX-rect.left)*sx,y=(e.clientY-rect.top)*sy;
+  const col=Math.floor(x/cw()),row=Math.floor(y/ch());
+  if(row<0||row>=ROWS||col<0||col>=COLS)return;
+  if(grid[row][col]===curColor)return;
+  const cells=regionAt(grid,row,col);
+  if(!cells.length)return;
+  hist.push(clone(grid));
+  stepsLeft--;anim=true;
+  const bsz=Math.max(4,Math.floor(cells.length/6));
+  let i=0;
+  function step(){
+    const batch=cells.slice(i,i+bsz);
+    for(const[r,c] of batch)grid[r][c]=curColor;
+    draw();i+=bsz;
+    if(i<cells.length)requestAnimationFrame(step);
+    else{anim=false;checkEnd();updateUI();}
+  }
+  requestAnimationFrame(step);
+  updateUI();
+});
+
+function checkEnd(){
+  const f=grid[0][0];
+  if(grid.every(r=>r.every(c=>c===f))){
+    over=true;
+    document.getElementById('ot').textContent='画作完成';
+    document.getElementById('os').textContent='第 '+(lvIdx+1)+' 关 · 用了 '+(maxSteps-stepsLeft)+' 步';
+    document.getElementById('ovBtn').textContent='下一关';
+    document.getElementById('ovBtn').onclick=()=>initLevel(lvIdx+1);
+    setTimeout(()=>document.getElementById('ov').classList.add('show'),250);
+    return;
+  }
+  if(stepsLeft<=0){
+    over=true;
+    document.getElementById('ot').textContent='步数用尽';
+    document.getElementById('os').textContent='这幅画还未完成……';
+    document.getElementById('ovBtn').textContent='重来';
+    document.getElementById('ovBtn').onclick=()=>restartLevel();
+    setTimeout(()=>document.getElementById('ov').classList.add('show'),250);
+  }
+}
+
+function updateUI(){
+  const cnt=new Array(COLORS.length).fill(0);
+  for(const row of grid)for(const c of row)cnt[c]++;
+  const pct=Math.round(Math.max(...cnt)/(ROWS*COLS)*100);
+  document.getElementById('pct').textContent=pct+'%';
+  document.getElementById('pb').style.width=pct+'%';
+  const sv=document.getElementById('steps');
+  sv.textContent=stepsLeft;
+  sv.className='sv'+(stepsLeft<=2?' danger':stepsLeft<=4?' warn':'');
+}
+
+function undoMove(){
+  if(!hist.length||over||anim)return;
+  grid=hist.pop();stepsLeft++;over=false;
+  document.getElementById('ov').classList.remove('show');
+  updateUI();draw();
+}
+
+function buildSw(n){
+  const w=document.getElementById('swWrap');w.innerHTML='';
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');
+    d.className='sw'+(i===curColor?' active':'');
+    d.style.background=COLORS[i];
+    d.addEventListener('click',()=>{curColor=i;document.querySelectorAll('.sw').forEach((s,j)=>s.classList.toggle('active',j===i));});
+    w.appendChild(d);
+  }
+}
+
+window.addEventListener('resize',()=>{resize();draw();});
+initLevel(0);
+</script>
+
+</body>
+</html>
